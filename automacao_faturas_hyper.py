@@ -185,6 +185,8 @@ def processar_faturas():
                 
                 if not icones_nuvem:
                     logger.warning(f"Nenhuma fatura de dezembro encontrada para a conta {conta}.")
+                    ws.Cells(i_linha, 3).Value = 'Sem Faturas'
+                    wb.Save()
                     i_linha += 1
                     continue
                 else:
@@ -217,6 +219,8 @@ def processar_faturas():
                     
                     if not arquivo_baixado:
                         logger.error("O Chrome nao salvou o arquivo ou demorou demais (> 30s).")
+                        ws.Cells(i_linha, 3).Value = 'Erro Download'
+                        wb.Save()
                         i_linha += 1
                         continue
                         
@@ -240,7 +244,14 @@ def processar_faturas():
             
             except Exception as loop_e:
                 logger.error(f"Falha ao processar etapas na pagina para a conta {conta}: {loop_e}")
-                raise loop_e
+                ws.Cells(i_linha, 3).Value = 'Erro Sistema'
+                try:
+                    wb.Save()
+                    driver.refresh() # Desobstrui modais travados ou falhas para a próxima conta
+                except Exception:
+                    pass
+                i_linha += 1
+                continue
             
             ws.Cells(i_linha, 3).Value = 'Ok'
             
